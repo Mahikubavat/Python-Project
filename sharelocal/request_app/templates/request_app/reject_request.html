@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Reject Request{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">Reject Request</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <strong>Note:</strong> This action will reject this request. The user will be notified.
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>Item</h5>
+                        <p><strong>{{ request_obj.item.title }}</strong></p>
+                        <p>{{ request_obj.item.description }}</p>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>Requested By</h5>
+                        <p><strong>{{ request_obj.requested_by.get_full_name|default:request_obj.requested_by.username }}</strong></p>
+                        <p>Email: {{ request_obj.requested_by.email }}</p>
+                    </div>
+
+                    <hr>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-lg">Reject Request</button>
+                        <a href="{% url 'request-list' %}" class="btn btn-secondary btn-lg">Cancel</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Request Details{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Request Details</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5>Item Information</h5>
+                            <p>
+                                <strong>Title:</strong> {{ request_obj.item.title }}
+                            </p>
+                            <p>
+                                <strong>Description:</strong><br>
+                                {{ request_obj.item.description }}
+                            </p>
+                            <p>
+                                <strong>Price:</strong> Rs. {{ request_obj.item.price }}
+                            </p>
+                            <p>
+                                <strong>Location:</strong> {{ request_obj.item.location }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            {% if request_obj.item.image %}
+                                <img src="{{ request_obj.item.image.url }}" alt="{{ request_obj.item.title }}" class="img-fluid rounded">
+                            {% else %}
+                                <div class="bg-light rounded text-center p-5">
+                                    <p>No image available</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5>Requested By</h5>
+                            <p>
+                                <strong>User:</strong> 
+                                {{ request_obj.requested_by.get_full_name|default:request_obj.requested_by.username }}
+                            </p>
+                            <p>
+                                <strong>Email:</strong> {{ request_obj.requested_by.email }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Item Owner</h5>
+                            <p>
+                                <strong>User:</strong> 
+                                {{ request_obj.item.owner.get_full_name|default:request_obj.item.owner.username }}
+                            </p>
+                            <p>
+                                <strong>Email:</strong> {{ request_obj.item.owner.email }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Request Status</h5>
+                            <p>
+                                {% if request_obj.status == 'Pending' %}
+                                    <span class="badge bg-warning text-dark">{{ request_obj.status }}</span>
+                                {% elif request_obj.status == 'Accepted' %}
+                                    <span class="badge bg-success">{{ request_obj.status }}</span>
+                                {% else %}
+                                    <span class="badge bg-danger">{{ request_obj.status }}</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Request Date</h5>
+                            <p>{{ request_obj.requested_date|date:"F d, Y H:i" }}</p>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="text-end">
+                        {% if request_obj.status == 'Pending' and request_obj.item.owner == user %}
+                            <a href="{% url 'accept-request' request_obj.id %}" class="btn btn-success me-2">Accept Request</a>
+                            <a href="{% url 'reject-request' request_obj.id %}" class="btn btn-danger">Reject Request</a>
+                        {% endif %}
+                        <a href="{% url 'request-history' %}" class="btn btn-secondary">Back to History</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

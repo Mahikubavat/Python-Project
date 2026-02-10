@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Requests for My Items{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-12">
+            <h2>Requests for My Items</h2>
+            
+            <!-- Status Filter -->
+            <div class="mb-4">
+                <a href="{% url 'request-list' %}" class="btn btn-sm {% if not status_filter %}btn-primary{% else %}btn-outline-primary{% endif %}">All</a>
+                {% for status_code, status_name in statuses %}
+                    <a href="?status={{ status_code }}" class="btn btn-sm {% if status_filter == status_code %}btn-warning{% else %}btn-outline-warning{% endif %}">{{ status_name }}</a>
+                {% endfor %}
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if requests %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Item</th>
+                                <th>Requested By</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for req in requests %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ req.item.title }}</strong>
+                                    </td>
+                                    <td>
+                                        {{ req.requested_by.get_full_name|default:req.requested_by.username }}
+                                    </td>
+                                    <td>
+                                        {% if req.status == 'Pending' %}
+                                            <span class="badge bg-warning">{{ req.status }}</span>
+                                        {% elif req.status == 'Accepted' %}
+                                            <span class="badge bg-success">{{ req.status }}</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">{{ req.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ req.requested_date|date:"M d, Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'request-detail' req.id %}" class="btn btn-sm btn-info">View</a>
+                                        {% if req.status == 'Pending' %}
+                                            <a href="{% url 'accept-request' req.id %}" class="btn btn-sm btn-success">Accept</a>
+                                            <a href="{% url 'reject-request' req.id %}" class="btn btn-sm btn-danger">Reject</a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if requests.has_other_pages %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if requests.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% if status_filter %}&status={{ status_filter }}{% endif %}">First</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ requests.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}">Previous</a>
+                                </li>
+                            {% endif %}
+
+                            {% for num in requests.paginator.page_range %}
+                                {% if requests.number == num %}
+                                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                {% else %}
+                                    <li class="page-item"><a class="page-link" href="?page={{ num }}{% if status_filter %}&status={{ status_filter }}{% endif %}">{{ num }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if requests.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ requests.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}">Next</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ requests.paginator.num_pages }}{% if status_filter %}&status={{ status_filter }}{% endif %}">Last</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-info">
+                    No requests found.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

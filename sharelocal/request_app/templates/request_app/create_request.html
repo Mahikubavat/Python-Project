@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Create Request{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Request Item</h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <div class="mb-4">
+                        <h5>Item Details</h5>
+                        <div class="row">
+                            <div class="col-md-4">
+                                {% if item.image %}
+                                    <img src="{{ item.image.url }}" alt="{{ item.title }}" class="img-fluid rounded">
+                                {% else %}
+                                    <div class="bg-light rounded text-center p-5">
+                                        <p>No image</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-8">
+                                <p><strong>Title:</strong> {{ item.title }}</p>
+                                <p><strong>Description:</strong> {{ item.description }}</p>
+                                <p><strong>Price:</strong> Rs. {{ item.price }}</p>
+                                <p><strong>Location:</strong> {{ item.location }}</p>
+                                <p><strong>Owner:</strong> {{ item.owner.get_full_name|default:item.owner.username }}</p>
+                                <p><strong>Status:</strong> 
+                                    {% if item.status == 'Available' %}
+                                        <span class="badge bg-success">{{ item.status }}</span>
+                                    {% elif item.status == 'Requested' %}
+                                        <span class="badge bg-warning">{{ item.status }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ item.status }}</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h5>Confirm Your Request</h5>
+                    <p class="text-muted">Are you sure you want to request this item? The owner will be notified about your request.</p>
+
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success btn-lg">Confirm Request</button>
+                        <a href="{% url 'home' %}" class="btn btn-secondary btn-lg">Cancel</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
