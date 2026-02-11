@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% block title %}{{ item.title }} - ShareLocal{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <!-- Item Image -->
+        <div class="col-lg-6 mb-4">
+            {% if item.image %}
+            <img src="{{ item.image.url }}" alt="{{ item.title }}" class="img-fluid rounded shadow-sm" style="max-height: 500px; width: 100%; object-fit: cover;">
+            {% else %}
+            <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 500px;">
+                <i class="bi bi-image" style="font-size: 5rem; color: #ccc;"></i>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Item Details -->
+        <div class="col-lg-6">
+            <!-- Status -->
+            <div class="mb-3">
+                {% if item.is_available %}
+                <span class="badge bg-success p-2">
+                    <i class="bi bi-check-circle"></i> Available
+                </span>
+                {% else %}
+                <span class="badge bg-danger p-2">
+                    <i class="bi bi-x-circle"></i> Not Available
+                </span>
+                {% endif %}
+                <span class="badge bg-info text-dark p-2">{{ item.get_item_type_display }}</span>
+            </div>
+
+            <!-- Title -->
+            <h1 class="h2 mb-2">{{ item.title }}</h1>
+
+            <!-- Price -->
+            {% if item.price %}
+            <div class="h3 text-primary mb-4">${{ item.price }}</div>
+            {% endif %}
+
+            <!-- Item Info -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    {% if item.category %}
+                    <p class="mb-2">
+                        <i class="bi bi-tag"></i>
+                        <strong>Category:</strong> {{ item.category.name }}
+                    </p>
+                    {% endif %}
+
+                    <p class="mb-2">
+                        <i class="bi bi-person"></i>
+                        <strong>Owner:</strong> {{ item.owner.first_name|default:item.owner.username }}
+                    </p>
+
+                    <p class="mb-2">
+                        <i class="bi bi-calendar3"></i>
+                        <strong>Listed:</strong> {{ item.created_at|date:"M d, Y g:i A" }}
+                    </p>
+
+                    {% if item.updated_at != item.created_at %}
+                    <p class="mb-0">
+                        <i class="bi bi-arrow-repeat"></i>
+                        <strong>Updated:</strong> {{ item.updated_at|date:"M d, Y g:i A" }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Description</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ item.description }}</p>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-grid gap-2 d-md-flex">
+                {% if is_owner %}
+                <a href="{% url 'edit_item' item.id %}" class="btn btn-primary">
+                    <i class="bi bi-pencil"></i> Edit Item
+                </a>
+                <a href="{% url 'delete_item' item.id %}" class="btn btn-danger">
+                    <i class="bi bi-trash"></i> Delete Item
+                </a>
+                {% else %}
+                {% if user.is_authenticated %}
+                {% if item.is_available %}
+                <a href="{% url 'request_list' %}" class="btn btn-success btn-lg">
+                    <i class="bi bi-hand-thumbs-up"></i> Request This Item
+                </a>
+                {% else %}
+                <button class="btn btn-secondary btn-lg" disabled>
+                    <i class="bi bi-x-circle"></i> Item Unavailable
+                </button>
+                {% endif %}
+                {% else %}
+                <a href="{% url 'login' %}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-box-arrow-in-right"></i> Login to Request
+                </a>
+                {% endif %}
+                {% endif %}
+                <a href="{% url 'item_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Items
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Items -->
+    {% if related_items %}
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3 class="mb-4">
+                <i class="bi bi-collection"></i> Similar Items
+            </h3>
+        </div>
+        {% for related_item in related_items %}
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100 shadow-sm item-card">
+                {% if related_item.image %}
+                <div class="card-img-top" style="background-image: url('{{ related_item.image.url }}'); height: 200px; background-size: cover; background-position: center;"></div>
+                {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                    <i class="bi bi-image" style="font-size: 2rem; color: #ccc;"></i>
+                </div>
+                {% endif %}
+                
+                <div class="card-body d-flex flex-column">
+                    <div class="mb-2">
+                        <span class="badge bg-info text-dark">{{ related_item.get_item_type_display }}</span>
+                    </div>
+                    
+                    <h5 class="card-title">{{ related_item.title }}</h5>
+                    <p class="card-text text-muted small">
+                        {{ related_item.description|truncatechars:80 }}
+                    </p>
+                    
+                    <div class="mt-auto">
+                        {% if related_item.price %}
+                        <p class="h6 text-primary mb-2">${{ related_item.price }}</p>
+                        {% endif %}
+                        
+                        <a href="{% url 'item_detail' related_item.id %}" class="btn btn-sm btn-primary w-100">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .item-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .item-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15) !important;
+    }
+</style>
+{% endblock %}
