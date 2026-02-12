@@ -1,182 +1,412 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - ShareLocal</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-        .navbar {
-            background: rgba(255, 255, 255, 0.95);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        .navbar-brand {
-            color: #667eea !important;
-            font-weight: 700;
-            font-size: 1.5rem;
-        }
-        .nav-link {
-            color: #333 !important;
-            font-weight: 500;
-        }
-        .nav-link:hover {
-            color: #667eea !important;
-        }
-        .hero-section {
-            color: white;
-            text-align: center;
-            padding: 80px 20px;
-        }
-        .hero-section h1 {
-            font-size: 3.5rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-        }
-        .hero-section p {
-            font-size: 1.25rem;
-            margin-bottom: 40px;
-        }
-        .btn-primary-custom {
-            background: white;
-            color: #667eea;
-            padding: 15px 40px;
-            border-radius: 50px;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-block;
-            margin: 0 10px;
-            transition: all 0.3s ease;
-        }
-        .btn-primary-custom:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            color: #667eea;
-        }
-        .btn-secondary-custom {
-            background: transparent;
-            color: white;
-            border: 2px solid white;
-            padding: 13px 38px;
-            border-radius: 50px;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-block;
-            margin: 0 10px;
-            transition: all 0.3s ease;
-        }
-        .btn-secondary-custom:hover {
-            background: white;
-            color: #667eea;
-        }
-        .features-section {
-            padding: 80px 20px;
-            background: white;
-        }
-        .feature-card {
-            text-align: center;
-            padding: 30px;
-            border-radius: 10px;
-            background: #f8f9fa;
-            transition: all 0.3s ease;
-        }
-        .feature-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.2);
-        }
-        .feature-icon {
-            font-size: 3rem;
-            color: #667eea;
-            margin-bottom: 20px;
-        }
-        .feature-card h3 {
-            color: #333;
-            font-weight: 600;
-            margin-bottom: 15px;
-        }
-        .feature-card p {
-            color: #666;
-        }
-    </style>
-</head>
-<body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light">
-        <div class="container">
-            <a class="navbar-brand" href="{% url 'home' %}">🏪 ShareLocal</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    {% if user.is_authenticated %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'profile' %}">👤 {{ user.first_name|default:user.username }}</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'logout' %}">Logout</a>
-                        </li>
-                    {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'login' %}">Login</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'register' %}">Register</a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </div>
-        </div>
-    </nav>
+{% extends "base.html" %}
 
-    <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="container">
-            <h1>Welcome to ShareLocal</h1>
-            <p>Buy and sell items locally. Connect with your community.</p>
-            {% if user.is_authenticated %}
-                <a href="{% url 'profile' %}" class="btn-primary-custom">View Your Profile</a>
-            {% else %}
-                <a href="{% url 'register' %}" class="btn-primary-custom">Get Started</a>
-                <a href="{% url 'login' %}" class="btn-secondary-custom">Login</a>
+{% block title %}Home - ShareLocal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+        color: white;
+        padding: 80px 20px;
+        text-align: center;
+        border-radius: 0.5rem;
+        margin-bottom: 50px;
+    }
+    
+    .hero-section h1 {
+        font-size: 3.5rem;
+        font-weight: 700;
+        margin-bottom: 20px;
+    }
+    
+    .hero-section p {
+        font-size: 1.25rem;
+        margin-bottom: 40px;
+        opacity: 0.9;
+    }
+    
+    .btn-hero {
+        background: white;
+        color: #2563eb;
+        padding: 12px 35px;
+        border-radius: 50px;
+        font-weight: 600;
+        display: inline-block;
+        margin: 10px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+    
+    .btn-hero:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        color: #2563eb;
+    }
+    
+    .btn-hero-secondary {
+        background: transparent;
+        color: white;
+        border: 2px solid white;
+        padding: 10px 33px;
+        border-radius: 50px;
+        font-weight: 600;
+        display: inline-block;
+        margin: 10px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+    
+    .btn-hero-secondary:hover {
+        background: white;
+        color: #2563eb;
+    }
+    
+    .stats-section {
+        margin: 60px 0;
+    }
+    
+    .stat-card {
+        text-align: center;
+        padding: 30px;
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2563eb;
+        margin-bottom: 10px;
+    }
+    
+    .stat-label {
+        color: #64748b;
+        font-size: 1rem;
+    }
+    
+    .featured-section {
+        margin: 60px 0;
+    }
+    
+    .featured-section h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 40px;
+        text-align: center;
+        color: #1e293b;
+    }
+    
+    .item-card {
+        background: white;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .item-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    }
+    
+    .item-image {
+        width: 100%;
+        height: 200px;
+        background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+    }
+    
+    .item-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .item-body {
+        padding: 20px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .item-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 10px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .item-description {
+        color: #64748b;
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+    
+    .item-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: auto;
+        padding-top: 15px;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    .item-price {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #2563eb;
+    }
+    
+    .item-location {
+        color: #64748b;
+        font-size: 0.85rem;
+    }
+    
+    .cta-section {
+        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+        color: white;
+        padding: 60px 20px;
+        border-radius: 0.5rem;
+        text-align: center;
+        margin: 60px 0;
+    }
+    
+    .cta-section h2 {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-bottom: 20px;
+    }
+    
+    .cta-section p {
+        font-size: 1.1rem;
+        margin-bottom: 30px;
+        opacity: 0.9;
+    }
+    
+    .features-grid {
+        margin: 60px 0;
+    }
+    
+    .feature-box {
+        background: white;
+        padding: 30px;
+        border-radius: 0.5rem;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .feature-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    }
+    
+    .feature-icon {
+        font-size: 3rem;
+        color: #2563eb;
+        margin-bottom: 15px;
+    }
+    
+    .feature-box h4 {
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: #1e293b;
+    }
+    
+    .feature-box p {
+        color: #64748b;
+        margin-bottom: 0;
+    }
+    
+    .pending-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: #ef4444;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <h1><i class="bi bi-share2"></i> ShareLocal</h1>
+    <p>Connect with your community and share items with ease</p>
+    {% if user.is_authenticated %}
+        <div>
+            <a href="{% url 'home' %}" class="btn-hero"><i class="bi bi-search"></i> Browse Items</a>
+            {% if pending_count > 0 %}
+                <a href="{% url 'request-list' %}" class="btn-hero"><i class="bi bi-bell-fill"></i> View {{ pending_count }} Pending Request{{ pending_count|pluralize }}</a>
             {% endif %}
+            <a href="{% url 'my-requests' %}" class="btn-hero-secondary"><i class="bi bi-inbox"></i> My Requests</a>
         </div>
-    </section>
+    {% else %}
+        <div>
+            <a href="{% url 'login' %}" class="btn-hero"><i class="bi bi-box-arrow-in-right"></i> Login</a>
+            <a href="{% url 'register' %}" class="btn-hero-secondary"><i class="bi bi-person-plus"></i> Sign Up</a>
+        </div>
+    {% endif %}
+</div>
 
-    <!-- Features Section -->
-    <section class="features-section">
-        <div class="container">
-            <h2 style="text-align: center; color: #333; margin-bottom: 60px; font-weight: 700;">Why Choose ShareLocal?</h2>
-            <div class="row">
-                <div class="col-md-4 mb-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">🛍️</div>
-                        <h3>Easy to Use</h3>
-                        <p>Simple and intuitive interface for buying and selling items locally.</p>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">🤝</div>
-                        <h3>Community Focused</h3>
-                        <p>Connect with people in your neighborhood and build local connections.</p>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">🔒</div>
-                        <h3>Secure & Safe</h3>
-                        <p>Your data is protected with industry-standard security measures.</p>
-                    </div>
-                </div>
+<!-- Statistics Section -->
+<div class="stats-section">
+    <div class="row">
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_items }}</div>
+                <div class="stat-label">Items Listed</div>
             </div>
         </div>
-    </section>
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_requests }}</div>
+                <div class="stat-label">Active Requests</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_users }}</div>
+                <div class="stat-label">Active Users</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-number">∞</div>
+                <div class="stat-label">Happy Neighbors</div>
+            </div>
+        </div>
+    </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<!-- Features Section -->
+<div class="features-grid">
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="feature-box">
+                <div class="feature-icon"><i class="bi bi-search"></i></div>
+                <h4>Browse Easily</h4>
+                <p>Find items in your neighborhood with our intuitive search and filter options.</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="feature-box">
+                <div class="feature-icon"><i class="bi bi-hand-thumbs-up"></i></div>
+                <h4>Request Items</h4>
+                <p>Make requests for items you need and wait for owners to respond.</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="feature-box">
+                <div class="feature-icon"><i class="bi bi-people"></i></div>
+                <h4>Connect</h4>
+                <p>Build trust and strengthen bonds with your local community.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Featured Items Section -->
+{% if featured_items %}
+    <div class="featured-section">
+        <h2><i class="bi bi-star-fill"></i> Featured Items</h2>
+        <div class="row">
+            {% for item in featured_items %}
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="item-card position-relative">
+                        {% if user.is_authenticated and pending_count > 0 %}
+                            <div class="pending-badge">
+                                <i class="bi bi-bell-fill"></i> {{ pending_count }}
+                            </div>
+                        {% endif %}
+                        <div class="item-image">
+                            {% if item.image %}
+                                <img src="{{ item.image.url }}" alt="{{ item.title }}">
+                            {% else %}
+                                <i class="bi bi-image" style="font-size: 4rem;"></i>
+                            {% endif %}
+                        </div>
+                        <div class="item-body">
+                            <h5 class="item-title">{{ item.title }}</h5>
+                            <p class="item-description">{{ item.description }}</p>
+                            <div class="item-meta">
+                                <span class="item-price">Rs. {{ item.price }}</span>
+                                <span class="item-location">
+                                    <i class="bi bi-geo-alt"></i> {{ item.location }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
+
+<!-- CTA Section -->
+<div class="cta-section">
+    <h2>Ready to Share?</h2>
+    <p>Join thousands of neighbors already using ShareLocal</p>
+    {% if user.is_authenticated %}
+        <a href="{% url 'request-history' %}" class="btn-hero"><i class="bi bi-clock-history"></i> View Request History</a>
+        <a href="{% url 'profile' %}" class="btn-hero"><i class="bi bi-person-circle"></i> My Profile</a>
+    {% else %}
+        <a href="{% url 'register' %}" class="btn-hero"><i class="bi bi-person-plus"></i> Get Started Now</a>
+        <a href="{% url 'login' %}" class="btn-hero-secondary"><i class="bi bi-box-arrow-in-right"></i> Already a Member?</a>
+    {% endif %}
+</div>
+
+<!-- How It Works Section -->
+<div style="margin: 60px 0; text-align: center;">
+    <h2 style="font-size: 2rem; font-weight: 700; margin-bottom: 40px; color: #1e293b;">How It Works</h2>
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div style="background: white; padding: 30px; border-radius: 0.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <div style="background: #2563eb; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 20px; font-weight: 700;">1</div>
+                <h4 style="color: #1e293b; font-weight: 700;">Share Items</h4>
+                <p style="color: #64748b;">Post items you want to share with your community</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div style="background: white; padding: 30px; border-radius: 0.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <div style="background: #2563eb; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 20px; font-weight: 700;">2</div>
+                <h4 style="color: #1e293b; font-weight: 700;">Receive Requests</h4>
+                <p style="color: #64748b;">Get requests from neighbors interested in your items</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div style="background: white; padding: 30px; border-radius: 0.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <div style="background: #2563eb; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 20px; font-weight: 700;">3</div>
+                <h4 style="color: #1e293b; font-weight: 700;">Connect</h4>
+                <p style="color: #64748b;">Accept requests and coordinate with neighbors</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
