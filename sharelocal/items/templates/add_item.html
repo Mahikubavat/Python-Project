@@ -80,7 +80,7 @@
                                 {{ form.price.label }}
                             </label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">₹</span>
                                 {{ form.price }}
                             </div>
                             <small class="form-text text-muted">Required for Sell or Rent items</small>
@@ -126,8 +126,27 @@
         </div>
     </div>
 </div>
-{% endblock %}
-    </form>
-</div>
+
+<!-- script to disable price for give away items -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const typeSelect = document.getElementById("id_item_type");
+        const priceInput = document.getElementById("id_price");
+
+        function togglePrice() {
+            if (typeSelect.value === 'Share') {
+                priceInput.value = '';
+                priceInput.setAttribute('disabled', 'disabled');
+                priceInput.closest('.mb-3').querySelector('small').textContent = 'Give away items cannot have a price.';
+            } else {
+                priceInput.removeAttribute('disabled');
+                priceInput.closest('.mb-3').querySelector('small').textContent = 'Required for Sell or Rent items';
+            }
+        }
+
+        typeSelect.addEventListener('change', togglePrice);
+        togglePrice();
+    });
+</script>
 
 {% endblock %}
