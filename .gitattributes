@@ -1,0 +1,4 @@
+sharelocal/account/templates/* linguist-vendored
+sharelocal/core/templates/* linguist-vendored
+sharelocal/items/templates/* linguist-vendored
+sharelocal/request_app/templates/* linguist-vendored

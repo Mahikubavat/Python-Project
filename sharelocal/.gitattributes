@@ -1,9 +1,0 @@
-# Exclude HTML templates from language stats
-*.html linguist-documentation
-
-# Exclude auto-generated migration files
-*/migrations/*.py linguist-generated
-
-# Optionally exclude static assets
-*.css linguist-documentation
-*.js linguist-documentation
