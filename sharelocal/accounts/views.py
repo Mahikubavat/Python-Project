@@ -7,6 +7,7 @@ from django.views.decorators.http import require_http_methods
 from .forms import UserRegistrationForm, UserProfileForm, UserLoginForm
 from .models import UserProfile
 from request_app.models import ItemRequest
+from items.models import Item
 
 
 @require_http_methods(["GET", "POST"])
@@ -108,13 +109,16 @@ def user_logout(request):
 @login_required(login_url='login')
 def profile(request):
     """
-    Display user profile with request statistics
+    Display user profile with request statistics and uploaded items
     """
     try:
         user_profile = UserProfile.objects.get(user=request.user)
     except UserProfile.DoesNotExist:
         # Create profile if it doesn't exist
         user_profile = UserProfile.objects.create(user=request.user)
+    
+    # Get user's uploaded items
+    user_items = Item.objects.filter(owner=request.user).order_by('-created_at')
     
     # Get request statistics
     pending_received = ItemRequest.objects.filter(
@@ -144,6 +148,7 @@ def profile(request):
     
     context = {
         'user_profile': user_profile,
+        'user_items': user_items,
         'pending_received': pending_received,
         'accepted_received': accepted_received,
         'pending_sent': pending_sent,
