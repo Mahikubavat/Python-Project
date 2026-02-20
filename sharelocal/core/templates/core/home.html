@@ -260,7 +260,7 @@
     <p>Connect with your community and share items with ease</p>
     {% if user.is_authenticated %}
         <div>
-            <a href="{% url 'home' %}" class="btn-hero"><i class="bi bi-search"></i> Browse Items</a>
+            <a href="{% url 'item_list' %}" class="btn-hero"><i class="bi bi-search"></i> Browse Items</a>
             {% if pending_count > 0 %}
                 <a href="{% url 'request-list' %}" class="btn-hero"><i class="bi bi-bell-fill"></i> View {{ pending_count }} Pending Request{{ pending_count|pluralize }}</a>
             {% endif %}
