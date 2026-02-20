@@ -25,13 +25,15 @@ class Item(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     image = models.ImageField(upload_to="items/", blank=True, null=True)
 
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="available")
+    """status = models.CharField(max_length=20, choices=STATUS_CHOICES, defaulta="available")"""
     is_available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["-created_at"]
+        verbose_name='Item'
+        verbose_name_plural='Items'
 
     def __str__(self):
         return self.title
