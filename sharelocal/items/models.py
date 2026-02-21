@@ -25,7 +25,7 @@ class Item(models.Model):
     is_available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-        status = models.CharField(max_length=20, default="available")  # ← ADD HERE
+    status = models.CharField(max_length=20, default="available")  # ← ADD HERE
 
     class Meta:
         ordering = ['-created_at']
@@ -44,5 +44,6 @@ class Item(models.Model):
         return self.title
 
     
+
 
 
