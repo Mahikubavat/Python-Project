@@ -110,11 +110,15 @@ def item_detail(request, item_id):
     
     # Check if current user owns this item
     is_owner = request.user == item.owner if request.user.is_authenticated else False
+
+    # fetch owner's profile for contact info
+    owner_profile = getattr(item.owner, 'userprofile', None)
     
     context = {
         'item': item,
         'related_items': related_items,
         'is_owner': is_owner,
+        'owner_profile': owner_profile,
     }
     return render(request, 'items/item_detail.html', context)
 
@@ -186,3 +190,4 @@ def toggle_item_availability(request, item_id):
     status = "available" if item.is_available else "unavailable"
     messages.success(request, f'Item is now marked as {status}.')
     return redirect('my_items')
+
