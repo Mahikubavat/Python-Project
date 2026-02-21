@@ -5,6 +5,7 @@ from .models import Item
 class ItemForm(forms.ModelForm):
     """
     Form for creating and editing items.
+    Implements validation rules for price depending on type.
     """
     class Meta:
         model = Item
@@ -34,3 +35,18 @@ class ItemForm(forms.ModelForm):
                 'class': 'form-control',
             }),
         }
+
+    def clean(self):
+        cleaned = super().clean()
+        item_type = cleaned.get('item_type')
+        price = cleaned.get('price')
+        if item_type == 'Share':
+            # treat as give away – no price allowed
+            if price:
+                self.add_error('price', 'Give away items cannot have a price.')
+            cleaned['price'] = None
+        else:
+            # sell or rent requires a price
+            if price in (None, ''):
+                self.add_error('price', 'Price is required for selling or renting.')
+        return cleaned
