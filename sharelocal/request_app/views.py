@@ -59,22 +59,29 @@ def create_request(request, item_id):
     """Create a new request for an item"""
     item = get_object_or_404(Item, id=item_id)
     
-    # Check if user already requested this item
-    existing_request = ItemRequest.objects.filter(
-        item=item,
-        requested_by=request.user,
-        status__in=['Pending', 'Accepted']
-    ).first()
-    
-    if existing_request:
-        messages.warning(request, 'You have already requested this item.')
-        return redirect('item-detail', pk=item_id)
-    
     # Check if user is the owner
     if item.owner == request.user:
         messages.error(request, 'You cannot request your own item.')
         return redirect('item-detail', pk=item_id)
-    
+
+    # Check if user already requested this item and the request is not accepted
+    existing_request = ItemRequest.objects.filter(
+        item=item,
+        requested_by=request.user
+    ).exclude(status='Accepted').first()
+
+    if existing_request:
+        # simply show the existing request details on the page
+        if request.method == 'POST':
+            # ignore form submission when a pending/rejected request exists
+            messages.warning(request, 'You have already requested this item. See details below.')
+        context = {
+            'item': item,
+            'existing_request': existing_request,
+        }
+        return render(request, 'request_app/create_request.html', context)
+
+    # create a new request normally
     if request.method == 'POST':
         # Create the request
         item_request = ItemRequest.objects.create(
@@ -84,7 +91,7 @@ def create_request(request, item_id):
         )
         messages.success(request, f'Request for {item.title} has been sent!')
         return redirect('my-requests')
-    
+
     context = {'item': item}
     return render(request, 'request_app/create_request.html', context)
 
