@@ -31,3 +31,4 @@ class ItemAdmin(admin.ModelAdmin):
         if obj:  # Editing existing object
             return self.readonly_fields + ('owner',)
         return self.readonly_fields
+

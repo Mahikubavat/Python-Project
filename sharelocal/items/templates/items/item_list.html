@@ -46,7 +46,7 @@
                     <label for="item_type" class="form-label">Type</label>
                     <select class="form-select" id="item_type" name="item_type">
                         <option value="">All Types</option>
-                        <option value="Share" {% if item_type_filter == 'Share' %}selected{% endif %}>Share</option>
+                        <option value="Share" {% if item_type_filter == 'Share' %}selected{% endif %}>Give Away</option>
                         <option value="Sell" {% if item_type_filter == 'Sell' %}selected{% endif %}>Sell</option>
                         <option value="Rent" {% if item_type_filter == 'Rent' %}selected{% endif %}>Rent</option>
                     </select>
@@ -88,7 +88,7 @@
                             <div class="mt-auto">
                                 {% if item.price %}
                                 <p class="h5 text-primary mb-2">
-                                    ${{ item.price }}
+                                    ₹{{ item.price }}
                                 </p>
                                 {% endif %}
                                 
@@ -96,9 +96,16 @@
                                     <i class="bi bi-person"></i> {{ item.owner.first_name|default:item.owner.username }}
                                 </p>
                                 
-                                <a href="{% url 'item_detail' item.id %}" class="btn btn-primary btn-sm w-100">
-                                    <i class="bi bi-eye"></i> View Details
-                                </a>
+                                <div class="d-grid gap-2">
+                                    <a href="{% url 'item_detail' item.id %}" class="btn btn-primary btn-sm w-100">
+                                        <i class="bi bi-eye"></i> View Details
+                                    </a>
+                                    {% if user.is_authenticated and item.is_available and item.owner != user and not user.is_anonymous %}
+                                    <a href="{% url 'create-request' item.id %}" class="btn btn-success btn-sm w-100">
+                                        <i class="bi bi-hand-thumbs-up"></i> Request
+                                    </a>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                     </div>

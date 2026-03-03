@@ -50,6 +50,14 @@
                             </div>
                         </div>
                     </div>
+                    {% if existing_request %}
+                    <hr>
+                    <div class="alert alert-info">
+                        <h5>Previous Request</h5>
+                        <p>You already requested this item on {{ existing_request.requested_date|date:"M d, Y H:i" }}.</p>
+                        <p>Status: <strong>{{ existing_request.status }}</strong></p>
+                    </div>
+                    {% endif %}
 
                     <hr>
 

@@ -7,8 +7,8 @@ def home(request):
     """
     Home page view with featured items and request stats
     """
-    # Get featured items (latest 6)
-    featured_items = Item.objects.filter(status='Available').order_by('-created_at')[:6]
+    # Get featured items (latest 6 available items)
+    featured_items = Item.objects.filter(is_available=True).order_by('-created_at')[:6]
     
     # Get statistics
     total_items = Item.objects.count()

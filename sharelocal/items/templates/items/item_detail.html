@@ -36,7 +36,7 @@
 
             <!-- Price -->
             {% if item.price %}
-            <div class="h3 text-primary mb-4">${{ item.price }}</div>
+            <div class="h3 text-primary mb-4">₹{{ item.price }}</div>
             {% endif %}
 
             <!-- Item Info -->
@@ -53,6 +53,12 @@
                         <i class="bi bi-person"></i>
                         <strong>Owner:</strong> {{ item.owner.first_name|default:item.owner.username }}
                     </p>
+                    {% if item.owner.email %}
+                    <p class="mb-2">
+                        <i class="bi bi-envelope"></i>
+                        <strong>Email:</strong> <a href="mailto:{{ item.owner.email }}">{{ item.owner.email }}</a>
+                    </p>
+                    {% endif %}
 
                     <p class="mb-2">
                         <i class="bi bi-calendar3"></i>
@@ -90,7 +96,7 @@
                 {% else %}
                 {% if user.is_authenticated %}
                 {% if item.is_available %}
-                <a href="{% url 'request_list' %}" class="btn btn-success btn-lg">
+                <a href="{% url 'create-request' item.id %}" class="btn btn-success btn-lg">
                     <i class="bi bi-hand-thumbs-up"></i> Request This Item
                 </a>
                 {% else %}
@@ -142,7 +148,7 @@
                     
                     <div class="mt-auto">
                         {% if related_item.price %}
-                        <p class="h6 text-primary mb-2">${{ related_item.price }}</p>
+                        <p class="h6 text-primary mb-2">₹{{ related_item.price }}</p>
                         {% endif %}
                         
                         <a href="{% url 'item_detail' related_item.id %}" class="btn btn-sm btn-primary w-100">
