@@ -2,7 +2,7 @@
 
 A professional Python project template with best practices for development, testing, and deployment.
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Overview](#overview)
 - [Features](#features)
@@ -14,11 +14,11 @@ A professional Python project template with best practices for development, test
 - [Contributing](#contributing)
 - [License](#license)
 
-## 🎯 Overview
+##  Overview
 
 This is a comprehensive Python project designed to serve as a template for building scalable, maintainable Python applications. It follows industry best practices and includes configurations for testing, linting, and CI/CD pipelines.
 
-## ✨ Features
+##  Features
 
 - Clean project structure
 - Type hints and documentation
@@ -27,7 +27,7 @@ This is a comprehensive Python project designed to serve as a template for build
 - Git configuration for collaboration
 - Ready-to-use development environment
 
-## 🚀 Installation
+##  Installation
 
 ### Prerequisites
 
@@ -54,7 +54,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## 💻 Usage
+##  Usage
 
 ### Running the Application
 
@@ -68,7 +68,7 @@ python main.py
 # Your code examples here
 ```
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 Python-Project/
@@ -82,7 +82,7 @@ Python-Project/
 └── main.py              # Entry point
 ```
 
-## 🛠️ Development
+##  Development
 
 ### Code Style
 
@@ -99,7 +99,7 @@ flake8 .
 mypy .
 ```
 
-## 🧪 Testing
+##  Testing
 
 Run the test suite:
 
@@ -113,7 +113,7 @@ With coverage:
 pytest --cov=sharelocal tests/
 ```
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions are welcome! Please follow these steps:
 
@@ -123,7 +123,7 @@ Contributions are welcome! Please follow these steps:
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📝 License
+##  License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
