@@ -9,5 +9,19 @@ class UserProfile(models.Model):
     location = models.CharField(max_length=100)
     profile_photo = models.ImageField(upload_to='profiles/', blank=True, null=True)
 
+    def save(self, *args, **kwargs):
+        """Update all user's items when location changes."""
+        # Check if location has changed
+        if self.pk:
+            try:
+                old_profile = UserProfile.objects.get(pk=self.pk)
+                if old_profile.location != self.location:
+                    # Update all items owned by this user
+                    from items.models import Item
+                    Item.objects.filter(owner=self.user).update(location=self.location)
+            except UserProfile.DoesNotExist:
+                pass
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.user.username
