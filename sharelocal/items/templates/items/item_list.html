@@ -43,6 +43,18 @@
                 </div>
 
                 <div class="mb-3">
+                    <label for="location" class="form-label">Location</label>
+                    <select class="form-select" id="location" name="location">
+                        <option value="">All Locations</option>
+                        {% for loc in locations %}
+                        <option value="{{ loc }}" {% if loc == location_filter %}selected{% endif %}>
+                            {{ loc }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
                     <label for="item_type" class="form-label">Type</label>
                     <select class="form-select" id="item_type" name="item_type">
                         <option value="">All Types</option>
@@ -50,6 +62,25 @@
                         <option value="Sell" {% if item_type_filter == 'Sell' %}selected{% endif %}>Sell</option>
                         <option value="Rent" {% if item_type_filter == 'Rent' %}selected{% endif %}>Rent</option>
                     </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Nearest search (GPS)</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="lat" id="lat" placeholder="Latitude" value="{{ user_lat|default:'' }}">
+                        <input type="text" class="form-control" name="lon" id="lon" placeholder="Longitude" value="{{ user_lon|default:'' }}">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="radius" class="form-label">Radius (km)</label>
+                    <input type="number" step="0.1" min="0" class="form-control" name="radius" id="radius" placeholder="e.g. 10" value="{{ radius_km|default:'' }}">
+                </div>
+
+                <div class="mb-3">
+                    <button type="button" class="btn btn-outline-secondary w-100" id="locate-btn">
+                        <i class="bi bi-geo-alt"></i> Use current location
+                    </button>
                 </div>
 
                 <button type="submit" class="btn btn-primary w-100">
@@ -96,6 +127,19 @@
                                     <i class="bi bi-person"></i> {{ item.owner.first_name|default:item.owner.username }}
                                 </p>
                                 
+                                {% if item.location %}
+                                <p class="small text-info mb-3">
+                                    <i class="bi bi-geo-alt"></i> {{ item.location }}
+                                    {% if item.distance_km %}
+                                    <br><i class="bi bi-signpost-split"></i> {{ item.distance_km|floatformat:1 }} km away
+                                    {% endif %}
+                                </p>
+                                {% elif item.distance_km %}
+                                <p class="small text-info mb-3">
+                                    <i class="bi bi-signpost-split"></i> {{ item.distance_km|floatformat:1 }} km away
+                                </p>
+                                {% endif %}
+                                
                                 <div class="d-grid gap-2">
                                     <a href="{% url 'item_detail' item.id %}" class="btn btn-primary btn-sm w-100">
                                         <i class="bi bi-eye"></i> View Details
@@ -119,10 +163,10 @@
                 <ul class="pagination justify-content-center">
                     {% if items.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if item_type_filter %}&item_type={{ item_type_filter }}{% endif %}">First</a>
+                        <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if item_type_filter %}&item_type={{ item_type_filter }}{% endif %}{% if location_filter %}&location={{ location_filter }}{% endif %}{% if user_lat %}&lat={{ user_lat }}{% endif %}{% if user_lon %}&lon={{ user_lon }}{% endif %}{% if radius_km %}&radius={{ radius_km }}{% endif %}">First</a>
                     </li>
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ items.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if item_type_filter %}&item_type={{ item_type_filter }}{% endif %}">Previous</a>
+                        <a class="page-link" href="?page={{ items.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if item_type_filter %}&item_type={{ item_type_filter }}{% endif %}{% if location_filter %}&location={{ location_filter }}{% endif %}{% if user_lat %}&lat={{ user_lat }}{% endif %}{% if user_lon %}&lon={{ user_lon }}{% endif %}{% if radius_km %}&radius={{ radius_km }}{% endif %}">Previous</a>
                     </li>
                     {% endif %}
 
@@ -132,10 +176,10 @@
 
                     {% if items.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ items.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if item_type_filter %}&item_type={{ item_type_filter }}{% endif %}">Next</a>
+                        <a class="page-link" href="?page={{ items.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if item_type_filter %}&item_type={{ item_type_filter }}{% endif %}{% if location_filter %}&location={{ location_filter }}{% endif %}{% if user_lat %}&lat={{ user_lat }}{% endif %}{% if user_lon %}&lon={{ user_lon }}{% endif %}{% if radius_km %}&radius={{ radius_km }}{% endif %}">Next</a>
                     </li>
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ items.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if item_type_filter %}&item_type={{ item_type_filter }}{% endif %}">Last</a>
+                        <a class="page-link" href="?page={{ items.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if item_type_filter %}&item_type={{ item_type_filter }}{% endif %}{% if location_filter %}&location={{ location_filter }}{% endif %}{% if user_lat %}&lat={{ user_lat }}{% endif %}{% if user_lon %}&lon={{ user_lon }}{% endif %}{% if radius_km %}&radius={{ radius_km }}{% endif %}">Last</a>
                     </li>
                     {% endif %}
                 </ul>
@@ -159,4 +203,31 @@
         box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15) !important;
     }
 </style>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const locateBtn = document.getElementById('locate-btn');
+        const latInput = document.getElementById('lat');
+        const lonInput = document.getElementById('lon');
+
+        locateBtn.addEventListener('click', function() {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser.');
+                return;
+            }
+            locateBtn.disabled = true;
+            locateBtn.textContent = 'Detecting...';
+
+            navigator.geolocation.getCurrentPosition(function(position) {
+                latInput.value = position.coords.latitude.toFixed(6);
+                lonInput.value = position.coords.longitude.toFixed(6);
+                locateBtn.disabled = false;
+                locateBtn.innerHTML = '<i class="bi bi-geo-alt"></i> Use current location';
+            }, function() {
+                alert('Error getting location. Make sure location services are enabled.');
+                locateBtn.disabled = false;
+                locateBtn.innerHTML = '<i class="bi bi-geo-alt"></i> Use current location';
+            });
+        });
+    });
+</script>
 {% endblock %}

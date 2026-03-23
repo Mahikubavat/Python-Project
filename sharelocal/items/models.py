@@ -17,6 +17,9 @@ class Item(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
+    location = models.CharField(max_length=100, null=True, blank=True, help_text='Location inherited from owner profile')
+    latitude = models.FloatField(null=True, blank=True, help_text='Item latitude for nearest search')
+    longitude = models.FloatField(null=True, blank=True, help_text='Item longitude for nearest search')
     
     item_type = models.CharField(max_length=20, choices=ITEM_TYPE_CHOICES, default='Share')
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -30,6 +33,17 @@ class Item(models.Model):
         ordering = ['-created_at']
         verbose_name = 'Item'
         verbose_name_plural = 'Items'
+
+    def save(self, *args, **kwargs):
+        """Auto-populate location from owner's profile if not set."""
+        if not self.location:
+            try:
+                user_profile = getattr(self.owner, 'userprofile', None)
+                if user_profile and user_profile.location:
+                    self.location = user_profile.location
+            except:
+                pass
+        super().save(*args, **kwargs)
 
     def clean(self):
         """Ensure price rules are followed depending on item type."""

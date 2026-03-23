@@ -9,7 +9,7 @@ class ItemForm(forms.ModelForm):
     """
     class Meta:
         model = Item
-        fields = ['title', 'description', 'category', 'item_type', 'price', 'image']
+        fields = ['title', 'description', 'category', 'item_type', 'price', 'image', 'location', 'latitude', 'longitude']
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -30,6 +30,21 @@ class ItemForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'Enter price (if selling/renting)',
                 'step': '0.01',
+            }),
+            'location': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Auto-filled from your profile',
+                'readonly': 'readonly',
+            }),
+            'latitude': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Latitude (e.g. 37.7749)',
+                'step': '0.000001',
+            }),
+            'longitude': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Longitude (e.g. -122.4194)',
+                'step': '0.000001',
             }),
             'image': forms.FileInput(attrs={
                 'class': 'form-control',

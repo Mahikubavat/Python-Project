@@ -6,6 +6,18 @@ from django.db.models import Q
 from .models import Item
 from .forms import ItemForm
 from core.models import Category
+import math
+
+
+def haversine(lat1, lon1, lat2, lon2):
+    """Return distance in kilometers between two lat/lon points."""
+    R = 6371  # Earth radius in km
+    lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return R * c
 
 
 def item_list(request):
@@ -32,20 +44,67 @@ def item_list(request):
     item_type_filter = request.GET.get('item_type')
     if item_type_filter:
         items = items.filter(item_type=item_type_filter)
+
+    # Filter by location
+    location_filter = request.GET.get('location')
+    if location_filter:
+        items = items.filter(location__iexact=location_filter)
+
+    # Location-based nearest search
+    user_lat = request.GET.get('lat')
+    user_lon = request.GET.get('lon')
+    radius_km = request.GET.get('radius')
+    nearest_search = False
+    if user_lat and user_lon:
+        try:
+            user_lat = float(user_lat)
+            user_lon = float(user_lon)
+            nearest_search = True
+        except ValueError:
+            user_lat = user_lon = None
+
+    if nearest_search:
+        items = items.filter(latitude__isnull=False, longitude__isnull=False)
+        item_list = []
+        for item in items:
+            item.distance_km = haversine(user_lat, user_lon, item.latitude, item.longitude)
+            item_list.append(item)
+
+        if radius_km:
+            try:
+                radius_km = float(radius_km)
+                item_list = [item for item in item_list if item.distance_km <= radius_km]
+            except ValueError:
+                pass
+
+        item_list.sort(key=lambda i: i.distance_km)
+        items = item_list
     
     # Pagination
     paginator = Paginator(items, 12)
     page = request.GET.get('page')
     items = paginator.get_page(page)
     
+    # Get locations from user profiles for dropdown
+    from accounts.models import UserProfile
+    locations = UserProfile.objects.values_list('location', flat=True).distinct().order_by('location')
+    locations = [loc for loc in locations if loc]  # Filter out None/empty
+    
     context = {
         'items': items,
         'categories': categories,
+        'locations': locations,
         'search_query': search_query,
         'category_filter': category_filter,
         'item_type_filter': item_type_filter,
+        'location_filter': location_filter,
+        'user_lat': user_lat,
+        'user_lon': user_lon,
+        'radius_km': radius_km,
+        'nearest_search': nearest_search,
     }
     return render(request, 'items/item_list.html', context)
+
 
 
 @login_required
@@ -58,6 +117,13 @@ def add_item(request):
         if form.is_valid():
             item = form.save(commit=False)
             item.owner = request.user
+            # Auto-populate location from owner's profile if not already set
+            if not item.location:
+                try:
+                    user_profile = request.user.userprofile
+                    item.location = user_profile.location
+                except:
+                    pass
             item.save()
             messages.success(request, f'Item "{item.title}" has been added successfully!')
             return redirect('item_list')
@@ -65,6 +131,12 @@ def add_item(request):
             messages.error(request, 'Please correct the errors below.')
     else:
         form = ItemForm()
+        # Pre-fill location field with owner's profile location
+        try:
+            user_profile = request.user.userprofile
+            form.initial['location'] = user_profile.location
+        except:
+            pass
 
     context = {'form': form}
     return render(request, 'items/add_item.html', context)
@@ -138,7 +210,14 @@ def edit_item(request, item_id):
     if request.method == "POST":
         form = ItemForm(request.POST, request.FILES, instance=item)
         if form.is_valid():
-            form.save()
+            edited_item = form.save(commit=False)
+            # Ensure location stays in sync with owner's profile
+            try:
+                user_profile = request.user.userprofile
+                edited_item.location = user_profile.location
+            except:
+                pass
+            edited_item.save()
             messages.success(request, f'Item "{item.title}" has been updated successfully!')
             return redirect('item_detail', item_id=item.id)
         else:
