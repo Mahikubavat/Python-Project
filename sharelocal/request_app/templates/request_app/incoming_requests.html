@@ -1,0 +1,105 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incoming Requests - ShareLocal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding-bottom: 40px; }
+        .navbar { background: rgba(255,255,255,0.95); box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .navbar-brand { color: #667eea !important; font-weight: 700; font-size: 1.4rem; }
+        .page-card { background: white; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); overflow: hidden; }
+        .page-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 24px 30px; }
+        .req-row { border-bottom: 1px solid #f0f0f0; padding: 18px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+        .req-row:last-child { border-bottom: none; }
+        .req-row:hover { background: #fafbff; }
+        .item-thumb { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+        .badge-status { padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
+        .badge-Pending { background: #fff3cd; color: #856404; }
+        .badge-Accepted { background: #d4edda; color: #155724; }
+        .badge-Rejected { background: #f8d7da; color: #721c24; }
+        .btn-accept { background: #28a745; color: white; border: none; border-radius: 6px; padding: 5px 14px; font-size: .82rem; cursor: pointer; }
+        .btn-accept:hover { background: #218838; }
+        .btn-reject { background: none; border: 1px solid #dc3545; color: #dc3545; border-radius: 6px; padding: 5px 14px; font-size: .82rem; cursor: pointer; }
+        .btn-reject:hover { background: #dc3545; color: white; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #aaa; }
+        .buyer-info { font-size: .82rem; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'home' %}">🏘️ ShareLocal</a>
+        <div class="ms-auto d-flex gap-2">
+            <a href="{% url 'item_list' %}" class="btn btn-sm btn-outline-secondary">Browse Items</a>
+            <a href="{% url 'my_requests' %}" class="btn btn-sm btn-outline-primary">My Requests</a>
+            <a href="{% url 'add_item' %}" class="btn btn-sm" style="background:#667eea;color:white;border-radius:6px;">+ List Item</a>
+            <a href="{% url 'profile' %}" class="btn btn-sm btn-outline-secondary">Profile</a>
+            <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-danger">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container" style="max-width:780px;">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-3">
+                {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="page-card">
+        <div class="page-header">
+            <h5 class="mb-0">📬 Incoming Buy Requests</h5>
+            <small>People who want to buy your listed items</small>
+        </div>
+
+        {% if incoming %}
+            {% for req in incoming %}
+            <div class="req-row">
+                {% if req.item.image %}
+                    <img src="{{ req.item.image.url }}" class="item-thumb" alt="{{ req.item.title }}">
+                {% else %}
+                    <div class="item-thumb d-flex align-items-center justify-content-center" style="font-size:1.8rem;background:#f0f2ff;border-radius:8px;">📦</div>
+                {% endif %}
+                <div class="flex-grow-1">
+                    <div class="fw-bold">{{ req.item.title }} <span style="font-size:.85rem;color:#667eea;">₹{{ req.item.price }}</span></div>
+                    <div class="buyer-info text-muted">
+                        👤 Buyer: <strong>{{ req.requested_by.get_full_name|default:req.requested_by.username }}</strong>
+                        ({{ req.requested_by.username }}) &nbsp;·&nbsp; {{ req.requested_date|date:"d M Y, H:i" }}
+                    </div>
+                    {% if req.requested_by.userprofile.location %}
+                        <div class="text-muted" style="font-size:.78rem;">📌 Buyer location: {{ req.requested_by.userprofile.location }}</div>
+                    {% endif %}
+                </div>
+                <span class="badge-status badge-{{ req.status }}">{{ req.status }}</span>
+                {% if req.status == 'Pending' %}
+                    <div class="d-flex gap-1">
+                        <form method="POST" action="{% url 'accept_request' req.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-accept">✓ Accept</button>
+                        </form>
+                        <form method="POST" action="{% url 'reject_request' req.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-reject">✕ Reject</button>
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <div style="font-size:3rem;">📭</div>
+                <h5 class="mt-3">No incoming requests yet</h5>
+                <p>Once buyers request your items, they'll appear here.</p>
+                <a href="{% url 'add_item' %}" class="btn mt-2" style="background:#667eea;color:white;border-radius:8px;padding:10px 28px;">+ List an Item</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

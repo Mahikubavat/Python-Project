@@ -1,0 +1,165 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Items - ShareLocal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding-bottom: 40px; }
+        .navbar { background: rgba(255,255,255,0.95); box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .navbar-brand { color: #667eea !important; font-weight: 700; font-size: 1.4rem; }
+        .filter-bar { background: white; border-radius: 12px; padding: 18px 24px; margin-bottom: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .btn-nearby { background: #28a745; color: white; border: none; border-radius: 8px; padding: 8px 20px; font-weight: 600; }
+        .btn-nearby:hover { background: #218838; color: white; }
+        .btn-nearby.active { background: #155724; }
+        .btn-clear { background: #6c757d; color: white; border: none; border-radius: 8px; padding: 8px 16px; }
+        .item-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: transform .2s, box-shadow .2s; height: 100%; }
+        .item-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.18); }
+        .item-card img { width: 100%; height: 180px; object-fit: cover; }
+        .item-body { padding: 16px; }
+        .item-title { font-weight: 700; font-size: 1rem; color: #333; margin-bottom: 4px; }
+        .item-price { color: #667eea; font-weight: 700; font-size: 1.05rem; }
+        .badge-distance { background: #e8f5e9; color: #2e7d32; font-size: 0.75rem; padding: 3px 10px; border-radius: 20px; font-weight: 600; }
+        .badge-location { background: #f3f4ff; color: #667eea; font-size: 0.73rem; padding: 2px 8px; border-radius: 20px; }
+        .gps-status { font-size: 0.82rem; margin-top: 4px; }
+        .radius-select { border: 1px solid #ddd; border-radius: 6px; padding: 6px 10px; font-size: 0.9rem; }
+        .no-items { text-align: center; color: white; padding: 60px 20px; }
+        .no-items h4 { font-size: 1.5rem; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'home' %}">🏘️ ShareLocal</a>
+        <div class="ms-auto d-flex gap-2">
+            {% if user.is_authenticated %}
+                <a href="{% url 'add_item' %}" class="btn btn-sm" style="background:#667eea;color:white;border-radius:8px;">+ List Item</a>
+                <a href="{% url 'profile' %}" class="btn btn-sm btn-outline-secondary">Profile</a>
+                <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-danger">Logout</a>
+            {% else %}
+                <a href="{% url 'login' %}" class="btn btn-sm btn-outline-primary">Login</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <div class="d-flex flex-wrap align-items-center gap-3">
+            <div>
+                <strong>🛒 Browse Items</strong>
+                {% if nearby_mode %}
+                    <span class="badge-distance ms-2">📍 Showing nearby within {{ radius_km }} km</span>
+                {% endif %}
+            </div>
+            <div class="ms-auto d-flex flex-wrap align-items-center gap-2">
+                <select class="radius-select" id="radius-select">
+                    <option value="5" {% if radius_km == 5 %}selected{% endif %}>5 km</option>
+                    <option value="10" {% if radius_km == 10 %}selected{% endif %}>10 km</option>
+                    <option value="20" {% if radius_km == 20 or not radius_km %}selected{% endif %}>20 km</option>
+                    <option value="50" {% if radius_km == 50 %}selected{% endif %}>50 km</option>
+                    <option value="100" {% if radius_km == 100 %}selected{% endif %}>100 km</option>
+                </select>
+                <button class="btn-nearby {% if nearby_mode %}active{% endif %}" id="nearby-btn" onclick="filterNearby()">
+                    📍 Near Me
+                </button>
+                {% if nearby_mode %}
+                    <a href="{% url 'item_list' %}" class="btn-clear">✕ Clear</a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="gps-status text-muted" id="nearby-status">
+            {% if nearby_mode %}
+                Showing items within {{ radius_km }} km of your location, sorted by distance.
+            {% else %}
+                Click "Near Me" to find items closest to you.
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Items Grid -->
+    {% if items_with_distance %}
+        <div class="row g-3">
+            {% for item, distance in items_with_distance %}
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <div class="item-card">
+                    {% if item.image %}
+                        <img src="{{ item.image.url }}" alt="{{ item.title }}">
+                    {% else %}
+                        <div style="height:180px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:3rem;">📦</div>
+                    {% endif %}
+                    <div class="item-body">
+                        <div class="item-title">{{ item.title }}</div>
+                        <div class="item-price">₹{{ item.price }}</div>
+                        <div class="mt-1">
+                            <span class="badge-location">📌 {{ item.location }}</span>
+                        </div>
+                        {% if distance is not None %}
+                            <div class="mt-1">
+                                <span class="badge-distance">🚶 {{ distance }} km away</span>
+                            </div>
+                        {% endif %}
+                        <div class="mt-2 d-flex justify-content-between align-items-center">
+                            <small class="text-muted">{{ item.category }}</small>
+                            <a href="{% url 'item_detail' item.pk %}" class="btn btn-sm" style="background:#667eea;color:white;border-radius:6px;padding:4px 12px;font-size:0.8rem;">View</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="no-items">
+            {% if nearby_mode %}
+                <h4>😔 No items found within {{ radius_km }} km</h4>
+                <p>Try increasing the radius or <a href="{% url 'item_list' %}" class="text-white text-decoration-underline">browse all items</a>.</p>
+            {% else %}
+                <h4>No items listed yet</h4>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'add_item' %}" class="btn mt-3" style="background:white;color:#667eea;border-radius:8px;padding:10px 30px;font-weight:600;">+ List the First Item</a>
+                {% endif %}
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function filterNearby() {
+    const btn = document.getElementById('nearby-btn');
+    const status = document.getElementById('nearby-status');
+    const radius = document.getElementById('radius-select').value;
+
+    if (!navigator.geolocation) {
+        status.textContent = '❌ GPS not supported in this browser.';
+        return;
+    }
+
+    btn.textContent = '⏳ Getting location...';
+    btn.disabled = true;
+    status.textContent = 'Detecting your location...';
+
+    navigator.geolocation.getCurrentPosition(
+        function(pos) {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            const url = `?nearby=1&lat=${lat}&lng=${lng}&radius=${radius}`;
+            window.location.href = url;
+        },
+        function(err) {
+            let msg = 'Could not get location.';
+            if (err.code === 1) msg = 'Location permission denied. Please allow access in your browser.';
+            status.textContent = '❌ ' + msg;
+            btn.textContent = '📍 Near Me';
+            btn.disabled = false;
+        },
+        { timeout: 10000, enableHighAccuracy: true }
+    );
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile - ShareLocal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 30px 0; }
+        .edit-container { background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 500px; padding: 40px; }
+        .form-label { font-weight: 500; color: #444; }
+        .btn-save { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; width: 100%; padding: 10px; border-radius: 8px; font-weight: 600; }
+        .btn-gps { background: #28a745; border: none; color: white; padding: 8px 14px; border-radius: 5px; font-size: 0.85rem; white-space: nowrap; }
+        .btn-gps:disabled { background: #6c757d; }
+        .gps-status { font-size: 0.8rem; margin-top: 4px; }
+        .gps-coords { font-size: 0.78rem; color: #888; margin-top: 3px; }
+    </style>
+</head>
+<body>
+<div class="edit-container">
+    <h4 class="fw-bold mb-1" style="color:#667eea;">✏️ Edit Profile</h4>
+    <p class="text-muted mb-4">Update your information and GPS location</p>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label class="form-label">Phone Number</label>
+            {{ form.phone }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Location / City</label>
+            <div class="d-flex gap-2">
+                {{ form.location }}
+                <button type="button" class="btn-gps" id="gps-btn" onclick="updateGPS()">📍 Update GPS</button>
+            </div>
+            <div class="gps-status text-muted" id="gps-status">
+                {% if form.instance.latitude %}
+                    Current GPS: {{ form.instance.latitude|floatformat:5 }}, {{ form.instance.longitude|floatformat:5 }}
+                {% else %}
+                    No GPS coordinates saved yet. Click "Update GPS" to capture.
+                {% endif %}
+            </div>
+        </div>
+
+        {{ form.latitude }}
+        {{ form.longitude }}
+
+        <div class="mb-3">
+            <label class="form-label">Profile Photo</label>
+            {{ form.profile_photo }}
+        </div>
+
+        <button type="submit" class="btn btn-save">Save Changes</button>
+    </form>
+
+    <div class="text-center mt-3">
+        <a href="{% url 'profile' %}" style="color:#667eea;">← Back to Profile</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function updateGPS() {
+    const btn = document.getElementById('gps-btn');
+    const status = document.getElementById('gps-status');
+
+    if (!navigator.geolocation) {
+        status.textContent = '❌ GPS not supported.';
+        return;
+    }
+    btn.disabled = true;
+    btn.textContent = '⏳ Detecting...';
+
+    navigator.geolocation.getCurrentPosition(
+        function(pos) {
+            const lat = pos.coords.latitude, lng = pos.coords.longitude;
+            document.getElementById('id_latitude').value = lat;
+            document.getElementById('id_longitude').value = lng;
+
+            fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
+                .then(r => r.json())
+                .then(data => {
+                    const addr = data.address;
+                    const readable = [addr.city || addr.town || addr.village || '', addr.state || '', addr.country || ''].filter(Boolean).join(', ');
+                    document.getElementById('id_location').value = readable;
+                    status.innerHTML = `<span class="text-success">✅ Updated: ${lat.toFixed(5)}, ${lng.toFixed(5)}</span>`;
+                    btn.textContent = '✅ Updated';
+                })
+                .catch(() => {
+                    document.getElementById('id_location').value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                    status.innerHTML = `<span class="text-success">✅ GPS captured: ${lat.toFixed(5)}, ${lng.toFixed(5)}</span>`;
+                    btn.textContent = '✅ Updated';
+                });
+        },
+        function(err) {
+            status.textContent = err.code === 1 ? '❌ Permission denied.' : '❌ Could not get location.';
+            btn.disabled = false;
+            btn.textContent = '📍 Update GPS';
+        },
+        { timeout: 10000, enableHighAccuracy: true }
+    );
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ item.title }} - ShareLocal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 30px 0; }
+        .navbar { background: rgba(255,255,255,0.95); box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .navbar-brand { color: #667eea !important; font-weight: 700; }
+        .detail-card { background: white; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.18); }
+        .item-img { width: 100%; max-height: 360px; object-fit: cover; }
+        .detail-body { padding: 28px 30px; }
+        .price-tag { font-size: 1.8rem; font-weight: 800; color: #667eea; }
+        .info-pill { display: inline-flex; align-items: center; gap: 6px; background: #f3f4ff; color: #555; border-radius: 20px; padding: 5px 14px; font-size: .85rem; margin: 3px; }
+        .badge-Available { background: #d4edda; color: #155724; padding: 5px 14px; border-radius: 20px; font-weight: 600; font-size: .85rem; }
+        .badge-Requested { background: #fff3cd; color: #856404; padding: 5px 14px; border-radius: 20px; font-weight: 600; font-size: .85rem; }
+        .badge-Given { background: #e2e3e5; color: #383d41; padding: 5px 14px; border-radius: 20px; font-weight: 600; font-size: .85rem; }
+        .btn-request { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 12px 30px; border-radius: 10px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all .2s; }
+        .btn-request:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(40,167,69,.4); color: white; }
+        .btn-request:disabled { background: #6c757d; transform: none; box-shadow: none; }
+        .map-link { display: inline-block; background: #667eea; color: white; padding: 8px 18px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: .9rem; }
+        .map-link:hover { background: #764ba2; color: white; }
+        .gps-box { background: #f3f4ff; border-radius: 10px; padding: 14px 18px; margin-top: 14px; }
+        .owner-box { background: #f8f9fa; border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; margin-top: 16px; }
+        .owner-avatar { width: 46px; height: 46px; border-radius: 50%; background: #667eea; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: 700; flex-shrink: 0; }
+        .already-requested { background: #fff3cd; border: 1px solid #ffc107; border-radius: 10px; padding: 12px 18px; font-weight: 600; color: #856404; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'home' %}">🏘️ ShareLocal</a>
+        <div class="ms-auto d-flex gap-2">
+            <a href="{% url 'item_list' %}" class="btn btn-sm btn-outline-secondary">← All Items</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'my_requests' %}" class="btn btn-sm btn-outline-primary">My Requests</a>
+                <a href="{% url 'incoming_requests' %}" class="btn btn-sm btn-outline-primary">Incoming</a>
+                <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-danger">Logout</a>
+            {% else %}
+                <a href="{% url 'login' %}" class="btn btn-sm btn-outline-primary">Login</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<div class="container" style="max-width: 700px;">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-3">
+                {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="detail-card">
+        {% if item.image %}
+            <img src="{{ item.image.url }}" class="item-img" alt="{{ item.title }}">
+        {% else %}
+            <div class="item-img d-flex align-items-center justify-content-center" style="background:#f0f2ff;height:220px;font-size:5rem;">📦</div>
+        {% endif %}
+
+        <div class="detail-body">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                <h3 class="fw-bold mb-0">{{ item.title }}</h3>
+                <span class="badge-{{ item.status }}">{{ item.status }}</span>
+            </div>
+
+            <div class="price-tag mb-3">₹{{ item.price }}</div>
+
+            <div class="mb-3">
+                <span class="info-pill">🏷️ {{ item.category }}</span>
+                <span class="info-pill">📌 {{ item.location }}</span>
+                <span class="info-pill">🕐 {{ item.created_at|date:"d M Y" }}</span>
+            </div>
+
+            <p class="text-muted" style="line-height:1.7;">{{ item.description }}</p>
+
+            <!-- Owner Info -->
+            <div class="owner-box">
+                <div class="owner-avatar">{{ item.owner.first_name|first|upper|default:"U" }}</div>
+                <div>
+                    <div class="fw-bold">{{ item.owner.get_full_name|default:item.owner.username }}</div>
+                    <div class="text-muted" style="font-size:.83rem;">
+                        @{{ item.owner.username }}
+                        {% if item.owner.userprofile.location %}
+                            &nbsp;·&nbsp; 📌 {{ item.owner.userprofile.location }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- GPS Box -->
+            {% if item.latitude and item.longitude %}
+            <div class="gps-box">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div>
+                        <strong>📍 GPS Verified Location</strong><br>
+                        <small class="text-muted">{{ item.latitude|floatformat:5 }}, {{ item.longitude|floatformat:5 }}</small>
+                    </div>
+                    <a class="map-link"
+                       href="https://www.google.com/maps?q={{ item.latitude }},{{ item.longitude }}"
+                       target="_blank">🗺️ View on Map</a>
+                </div>
+                <div class="mt-2" id="distance-info"></div>
+            </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="mt-4 d-flex flex-wrap gap-2 align-items-center">
+                {% if user.is_authenticated %}
+                    {% if user == item.owner %}
+                        <span class="text-muted">✏️ This is your listing.</span>
+                    {% elif item.status == 'Available' %}
+                        {% if user_has_requested %}
+                            <div class="already-requested w-100">⏳ You have already requested this item. Check <a href="{% url 'my_requests' %}">My Requests</a>.</div>
+                        {% else %}
+                            <form method="POST" action="{% url 'request_item' item.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-request">🛒 Request to Buy</button>
+                            </form>
+                        {% endif %}
+                    {% elif item.status == 'Requested' %}
+                        <button class="btn-request" disabled>⏳ Item Already Requested</button>
+                    {% elif item.status == 'Given' %}
+                        <button class="btn-request" disabled>✅ Item Has Been Sold</button>
+                    {% endif %}
+                    {% if item.latitude and item.longitude %}
+                        <button class="btn btn-outline-secondary" onclick="getDistanceToItem()">📍 How Far?</button>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'login' %}?next={{ request.path }}" class="btn-request" style="text-decoration:none;display:inline-block;">🔑 Login to Buy</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+{% if item.latitude and item.longitude %}
+function getDistanceToItem() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(function(pos) {
+        const R = 6371;
+        const lat1 = pos.coords.latitude, lng1 = pos.coords.longitude;
+        const lat2 = {{ item.latitude }}, lng2 = {{ item.longitude }};
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+        const dist = (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))).toFixed(2);
+        document.getElementById('distance-info').innerHTML =
+            `<div class="alert alert-info mt-2 mb-0">🚶 You are approximately <strong>${dist} km</strong> from this item.</div>`;
+    });
+}
+{% endif %}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
