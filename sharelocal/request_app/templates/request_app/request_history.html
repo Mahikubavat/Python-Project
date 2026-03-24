@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Request History{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-12">
+            <h2>Request History</h2>
+            
+            <!-- Status Filter -->
+            <div class="mb-4">
+                <a href="{% url 'request-history' %}" class="btn btn-sm {% if not status_filter %}btn-primary{% else %}btn-outline-primary{% endif %}">All</a>
+                {% for status_code, status_name in statuses %}
+                    <a href="?status={{ status_code }}" class="btn btn-sm {% if status_filter == status_code %}btn-info{% else %}btn-outline-info{% endif %}">{{ status_name }}</a>
+                {% endfor %}
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Requests Sent -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Requests I've Sent</h5>
+                </div>
+                <div class="card-body">
+                    {% if sent_requests %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Owner</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for req in sent_requests %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ req.item.title }}</strong>
+                                            </td>
+                                            <td>
+                                                {{ req.item.owner.get_full_name|default:req.item.owner.username }}
+                                            </td>
+                                            <td>
+                                                {% if req.status == 'Pending' %}
+                                                    <span class="badge bg-warning text-dark">{{ req.status }}</span>
+                                                {% elif req.status == 'Accepted' %}
+                                                    <span class="badge bg-success">{{ req.status }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">{{ req.status }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ req.requested_date|date:"M d, Y" }}</td>
+                                            <td>
+                                                <a href="{% url 'request-detail' req.id %}" class="btn btn-sm btn-info">View</a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">You haven't sent any requests yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Requests Received -->
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">Requests I've Received</h5>
+                </div>
+                <div class="card-body">
+                    {% if received_requests %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Requested By</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for req in received_requests %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ req.item.title }}</strong>
+                                            </td>
+                                            <td>
+                                                {{ req.requested_by.get_full_name|default:req.requested_by.username }}
+                                            </td>
+                                            <td>
+                                                {% if req.status == 'Pending' %}
+                                                    <span class="badge bg-warning text-dark">{{ req.status }}</span>
+                                                {% elif req.status == 'Accepted' %}
+                                                    <span class="badge bg-success">{{ req.status }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">{{ req.status }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ req.requested_date|date:"M d, Y" }}</td>
+                                            <td>
+                                                <a href="{% url 'request-detail' req.id %}" class="btn btn-sm btn-info">View</a>
+                                                {% if req.status == 'Pending' %}
+                                                    <a href="{% url 'accept-request' req.id %}" class="btn btn-sm btn-success">Accept</a>
+                                                    <a href="{% url 'reject-request' req.id %}" class="btn btn-sm btn-danger">Reject</a>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">You haven't received any requests yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

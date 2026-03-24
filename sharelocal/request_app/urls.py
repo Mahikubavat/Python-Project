@@ -2,10 +2,11 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('request/<int:item_id>/', views.request_item, name='request_item'),
-    path('my-requests/', views.my_requests, name='my_requests'),
-    path('incoming/', views.incoming_requests, name='incoming_requests'),
-    path('accept/<int:req_id>/', views.accept_request, name='accept_request'),
-    path('reject/<int:req_id>/', views.reject_request, name='reject_request'),
-    path('cancel/<int:req_id>/', views.cancel_request, name='cancel_request'),
+    path('requests/', views.request_list, name='request-list'),
+    path('my-requests/', views.my_requests, name='my-requests'),
+    path('request/<int:request_id>/', views.request_detail, name='request-detail'),
+    path('request/create/<int:item_id>/', views.create_request, name='create-request'),
+    path('request/<int:request_id>/accept/', views.accept_request, name='accept-request'),
+    path('request/<int:request_id>/reject/', views.reject_request, name='reject-request'),
+    path('request-history/', views.request_history, name='request-history'),
 ]
