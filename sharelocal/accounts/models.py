@@ -1,6 +1,5 @@
 from django.contrib.auth.models import User
 from django.db import models
-import requests
 
 def geocode_location(location):
     """Geocode a location string to get latitude and longitude."""
@@ -8,6 +7,7 @@ def geocode_location(location):
         return None, None
     
     try:
+        import requests
         # Using Nominatim API (OpenStreetMap) - free and no API key required
         url = f"https://nominatim.openstreetmap.org/search"
         params = {
@@ -24,7 +24,8 @@ def geocode_location(location):
         
         if data:
             return float(data[0]['lat']), float(data[0]['lon'])
-    except (requests.RequestException, ValueError, KeyError, IndexError):
+    except Exception:
+        # Gracefully handle any errors (including missing requests library)
         pass
     
     return None, None
@@ -34,7 +35,9 @@ def geocode_location(location):
 class UserProfile(models.Model):
     user = models.OneToOneField(User,on_delete=models.CASCADE)
     phone = models.CharField(max_length=15)
-    location = models.CharField(max_length=100)
+    location = models.CharField(max_length=100, blank=True, null=True)
+    latitude = models.FloatField(null=True, blank=True, help_text='User latitude for location services')
+    longitude = models.FloatField(null=True, blank=True, help_text='User longitude for location services')
     profile_photo = models.ImageField(upload_to='profiles/', blank=True, null=True)
 
     def save(self, *args, **kwargs):
@@ -48,16 +51,22 @@ class UserProfile(models.Model):
             except UserProfile.DoesNotExist:
                 pass
         
+        # Geocode location if it changed or coordinates are missing
+        if location_changed or (self.location and (not self.latitude or not self.longitude)):
+            lat, lon = geocode_location(self.location)
+            if lat is not None and lon is not None:
+                self.latitude = lat
+                self.longitude = lon
+        
         super().save(*args, **kwargs)
         
         # Update all items owned by this user if location changed
         if location_changed:
             from items.models import Item
-            lat, lon = geocode_location(self.location)
             Item.objects.filter(owner=self.user).update(
                 location=self.location,
-                latitude=lat,
-                longitude=lon
+                latitude=self.latitude,
+                longitude=self.longitude
             )
 
     def __str__(self):

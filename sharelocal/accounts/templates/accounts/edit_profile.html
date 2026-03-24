@@ -57,9 +57,42 @@
                             <div class="col-md-6 mb-3">
                                 <label for="id_location" class="form-label">Location</label>
                                 {{ form.location }}
+                                <small class="form-text text-muted">Enter your city or address</small>
                                 {% if form.location.errors %}
                                     <div class="alert alert-danger mt-2">{{ form.location.errors }}</div>
                                 {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- GPS Coordinates Section -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-geo-alt"></i> GPS Location
+                                    <small class="text-muted">(Optional - for better item location accuracy)</small>
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-5 mb-3">
+                                        <label for="id_latitude" class="form-label">Latitude</label>
+                                        {{ form.latitude }}
+                                        <small class="form-text text-muted">Auto-filled when you set location</small>
+                                    </div>
+                                    <div class="col-md-5 mb-3">
+                                        <label for="id_longitude" class="form-label">Longitude</label>
+                                        {{ form.longitude }}
+                                        <small class="form-text text-muted">Auto-filled when you set location</small>
+                                    </div>
+                                    <div class="col-md-2 mb-3 d-flex align-items-end">
+                                        <button type="button" class="btn btn-outline-primary w-100" id="get-current-location-btn">
+                                            <i class="bi bi-geo-alt"></i> Use Current Location
+                                        </button>
+                                    </div>
+                                </div>
+                                <small class="form-text text-muted">
+                                    <i class="bi bi-info-circle"></i> Click "Use Current Location" to automatically fill your GPS coordinates, or enter them manually for precise location services.
+                                </small>
                             </div>
                         </div>
 
@@ -93,4 +126,82 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const locationInput = document.getElementById('location-input');
+    const latitudeInput = document.getElementById('latitude-input');
+    const longitudeInput = document.getElementById('longitude-input');
+    const getLocationBtn = document.getElementById('get-current-location-btn');
+
+    // Function to reverse geocode coordinates to address
+    async function reverseGeocode(lat, lon) {
+        try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`);
+            const data = await response.json();
+            if (data && data.display_name) {
+                return data.display_name;
+            }
+        } catch (error) {
+            console.error('Reverse geocoding failed:', error);
+        }
+        return null;
+    }
+
+    // Get current location
+    getLocationBtn.addEventListener('click', function() {
+        if (!navigator.geolocation) {
+            alert('Geolocation is not supported by your browser.');
+            return;
+        }
+
+        getLocationBtn.disabled = true;
+        getLocationBtn.innerHTML = '<i class="bi bi-geo-alt"></i> Getting Location...';
+
+        navigator.geolocation.getCurrentPosition(async function(position) {
+            const lat = position.coords.latitude.toFixed(6);
+            const lon = position.coords.longitude.toFixed(6);
+
+            latitudeInput.value = lat;
+            longitudeInput.value = lon;
+
+            // Try to get address from coordinates
+            const address = await reverseGeocode(lat, lon);
+            if (address && !locationInput.value) {
+                // Only fill location if it's empty
+                locationInput.value = address.split(',')[0] + ', ' + address.split(',')[1]; // City, State/Country
+            }
+
+            getLocationBtn.disabled = false;
+            getLocationBtn.innerHTML = '<i class="bi bi-geo-alt"></i> Use Current Location';
+        }, function(error) {
+            alert('Error getting location: ' + error.message);
+            getLocationBtn.disabled = false;
+            getLocationBtn.innerHTML = '<i class="bi bi-geo-alt"></i> Use Current Location';
+        });
+    });
+
+    // Auto-geocode when location is entered
+    let geocodeTimeout;
+    locationInput.addEventListener('input', function() {
+        clearTimeout(geocodeTimeout);
+        geocodeTimeout = setTimeout(async function() {
+            const location = locationInput.value.trim();
+            if (location.length > 3) { // Only geocode if location is meaningful
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`);
+                    const data = await response.json();
+                    if (data && data.length > 0) {
+                        latitudeInput.value = parseFloat(data[0].lat).toFixed(6);
+                        longitudeInput.value = parseFloat(data[0].lon).toFixed(6);
+                    }
+                } catch (error) {
+                    console.error('Geocoding failed:', error);
+                }
+            }
+        }, 1000); // Wait 1 second after user stops typing
+    });
+});
+</script>
+
 {% endblock %}
