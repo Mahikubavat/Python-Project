@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+{% block title %}Items - ShareLocal{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2 class="h2 mb-0">
+                <i class="bi bi-collection"></i> Available Items
+            </h2>
+        </div>
+        <div class="col-md-4 text-md-end">
+            {% if user.is_authenticated %}
+            <a href="{% url 'add_item' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Add New Item
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="row mb-4">
+        <div class="col-lg-3">
+            <form method="get" class="card p-4 shadow-sm">
+                <h5 class="card-title">Filters</h5>
+                {% if nearest_search %}
+                <div class="alert alert-info small">
+                    <i class="bi bi-geo-alt"></i> Showing items near your location (within {{ radius_km }} km)
+                </div>
+                {% endif %}
+                
+                <div class="mb-3">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="search" name="search" 
+                           placeholder="Search items..." value="{{ search_query }}">
+                </div>
+
+                <div class="mb-3">
+                    <label for="category" class="form-label">Category</label>
+                    <select class="form-select" id="category" name="category">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if category.id|stringformat:"s" == category_filter %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="item_type" class="form-label">Type</label>
+                    <select class="form-select" id="item_type" name="item_type">
+                        <option value="">All Types</option>
+                        <option value="Share" {% if item_type_filter == 'Share' %}selected{% endif %}>Give Away</option>
+                        <option value="Sell" {% if item_type_filter == 'Sell' %}selected{% endif %}>Sell</option>
+                        <option value="Rent" {% if item_type_filter == 'Rent' %}selected{% endif %}>Rent</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Nearest search (GPS)</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="lat" id="lat" placeholder="Latitude" value="{{ user_lat|default:'' }}">
+                        <input type="text" class="form-control" name="lon" id="lon" placeholder="Longitude" value="{{ user_lon|default:'' }}">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="radius" class="form-label">Radius (km)</label>
+                    <input type="number" step="0.1" min="0" class="form-control" name="radius" id="radius" placeholder="50" value="{{ radius_km|default:'50' }}">
+                </div>
+
+                <div class="mb-3">
+                    <button type="button" class="btn btn-outline-secondary w-100" id="locate-btn">
+                        <i class="bi bi-geo-alt"></i> Use current location
+                    </button>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> Search
+                </button>
+
+                <hr class="my-3">
+
+                <button type="button" class="btn btn-outline-info w-100" id="toggle-map-btn">
+                    <i class="bi bi-map"></i> View on Map
+                </button>
+            </form>
+        </div>
+
+        <div class="col-lg-9">
+            {% if items %}
+            <!-- Map Container (Hidden by default) -->
+            <div id="items-map-container" class="card shadow-sm mb-4" style="display: none;">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-map"></i> Items Map
+                        </h5>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="close-map-btn">
+                            <i class="bi bi-x-lg"></i> Close Map
+                        </button>
+                    </div>
+                </div>
+                <div id="items-map" class="card-body" style="padding: 0; height: 600px; border-radius: 0.25rem;">
+                    <!-- Map will load here -->
+                </div>
+            </div>
+
+            <!-- Items Grid -->
+            <div id="items-grid">
+                <div class="row g-4">
+                {% for item in items %}
+                <div class="col-md-6 col-lg-4" {% if item.latitude and item.longitude %}data-lat="{{ item.latitude }}" data-lon="{{ item.longitude }}" data-title="{{ item.title }}" data-location="{{ item.location }}" data-url="{% url 'item_detail' item.id %}"{% endif %}>
+                    <div class="card h-100 shadow-sm item-card">
+                        {% if item.image %}
+                        <div class="card-img-top" style="background-image: url('{{ item.image.url }}'); height: 200px; background-size: cover; background-position: center;"></div>
+                        {% else %}
+                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <i class="bi bi-image" style="font-size: 3rem; color: #ccc;"></i>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="card-body d-flex flex-column">
+                            <div class="mb-2">
+                                <span class="badge bg-info text-dark">{{ item.get_item_type_display }}</span>
+                                {% if item.category %}
+                                <span class="badge bg-secondary">{{ item.category.name }}</span>
+                                {% endif %}
+                            </div>
+                            
+                            <h5 class="card-title">{{ item.title }}</h5>
+                            <p class="card-text text-muted small">
+                                {{ item.description|truncatechars:80 }}
+                            </p>
+                            
+                            <div class="mt-auto">
+                                {% if item.price %}
+                                <p class="h5 text-primary mb-2">
+                                    ₹{{ item.price }}
+                                </p>
+                                {% endif %}
+                                
+                                <p class="small text-muted mb-3">
+                                    <i class="bi bi-person"></i> {{ item.owner.first_name|default:item.owner.username }}
+                                </p>
+                                
+                                {% if item.location %}
+                                <p class="small text-info mb-3">
+                                    <i class="bi bi-geo-alt"></i> {{ item.location }}
+                                    {% if item.distance_km %}
+                                    <br><i class="bi bi-signpost-split"></i> {{ item.distance_km|floatformat:1 }} km away
+                                    {% endif %}
+                                </p>
+                                {% elif item.distance_km %}
+                                <p class="small text-info mb-3">
+                                    <i class="bi bi-signpost-split"></i> {{ item.distance_km|floatformat:1 }} km away
+                                </p>
+                                {% endif %}
+                                
+                                <div class="d-grid gap-2">
+                                    <a href="{% url 'item_detail' item.id %}" class="btn btn-primary btn-sm w-100">
+                                        <i class="bi bi-eye"></i> View Details
+                                    </a>
+                                    {% if user.is_authenticated and item.is_available and item.owner != user and not user.is_anonymous %}
+                                    <a href="{% url 'create-request' item.id %}" class="btn btn-success btn-sm w-100">
+                                        <i class="bi bi-hand-thumbs-up"></i> Request
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if items.has_other_pages %}
+            <nav aria-label="Page navigation" class="mt-5">
+                <ul class="pagination justify-content-center">
+                    {% if items.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if item_type_filter %}&item_type={{ item_type_filter }}{% endif %}{% if user_lat %}&lat={{ user_lat }}{% endif %}{% if user_lon %}&lon={{ user_lon }}{% endif %}{% if radius_km %}&radius={{ radius_km }}{% endif %}">First</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ items.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if item_type_filter %}&item_type={{ item_type_filter }}{% endif %}{% if user_lat %}&lat={{ user_lat }}{% endif %}{% if user_lon %}&lon={{ user_lon }}{% endif %}{% if radius_km %}&radius={{ radius_km }}{% endif %}">Previous</a>
+                    </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">Page {{ items.number }} of {{ items.paginator.num_pages }}</span>
+                    </li>
+
+                    {% if items.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ items.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if item_type_filter %}&item_type={{ item_type_filter }}{% endif %}{% if user_lat %}&lat={{ user_lat }}{% endif %}{% if user_lon %}&lon={{ user_lon }}{% endif %}{% if radius_km %}&radius={{ radius_km }}{% endif %}">Next</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ items.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if item_type_filter %}&item_type={{ item_type_filter }}{% endif %}{% if user_lat %}&lat={{ user_lat }}{% endif %}{% if user_lon %}&lon={{ user_lon }}{% endif %}{% if radius_km %}&radius={{ radius_km }}{% endif %}">Last</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="container py-5">
+    <div class="alert alert-info" role="alert">
+        <i class="bi bi-info-circle"></i> No items found matching your criteria. Try adjusting your filters!
+    </div>
+</div>
+{% endif %}
+
+<style>
+    .item-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .item-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15) !important;
+    }
+    #items-map {
+        z-index: 1;
+    }
+</style>
+
+<!-- Leaflet Map CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+
+<!-- Leaflet Map JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<script>
+    let itemsMap = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const locateBtn = document.getElementById('locate-btn');
+        const latInput = document.getElementById('lat');
+        const lonInput = document.getElementById('lon');
+        const toggleMapBtn = document.getElementById('toggle-map-btn');
+        const closeMapBtn = document.getElementById('close-map-btn');
+        const mapContainer = document.getElementById('items-map-container');
+
+        // Toggle map view
+        if (toggleMapBtn) {
+            toggleMapBtn.addEventListener('click', function() {
+                mapContainer.style.display = mapContainer.style.display === 'none' ? 'block' : 'none';
+                if (mapContainer.style.display === 'block') {
+                    setTimeout(function() {
+                        initializeItemsMap();
+                    }, 100);
+                }
+            });
+        }
+
+        if (closeMapBtn) {
+            closeMapBtn.addEventListener('click', function() {
+                mapContainer.style.display = 'none';
+            });
+        }
+
+        // Auto-detect location on page load if no coordinates are set
+        if (!latInput.value && !lonInput.value && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                latInput.value = position.coords.latitude.toFixed(6);
+                lonInput.value = position.coords.longitude.toFixed(6);
+                // Auto-submit the form to show nearby items
+                document.querySelector('form').submit();
+            }, function() {
+                // Silently fail if location access is denied
+                console.log('Location access denied or unavailable');
+            });
+        }
+
+        locateBtn.addEventListener('click', function() {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser.');
+                return;
+            }
+            locateBtn.disabled = true;
+            locateBtn.textContent = 'Detecting...';
+
+            navigator.geolocation.getCurrentPosition(function(position) {
+                latInput.value = position.coords.latitude.toFixed(6);
+                lonInput.value = position.coords.longitude.toFixed(6);
+                locateBtn.disabled = false;
+                locateBtn.innerHTML = '<i class="bi bi-geo-alt"></i> Use current location';
+            }, function() {
+                alert('Error getting location. Make sure location services are enabled.');
+                locateBtn.disabled = false;
+                locateBtn.innerHTML = '<i class="bi bi-geo-alt"></i> Use current location';
+            });
+        });
+    });
+
+    function initializeItemsMap() {
+        if (itemsMap !== null) {
+            itemsMap.invalidateSize();
+            return;
+        }
+
+        // Get all items with coordinates from the page
+        const itemCards = document.querySelectorAll('[data-lat][data-lon]');
+        
+        if (itemCards.length === 0) {
+            alert('No items with location data available for map view.');
+            document.getElementById('items-map-container').style.display = 'none';
+            return;
+        }
+
+        // Initialize map centered on first item
+        const firstLat = parseFloat(itemCards[0].dataset.lat);
+        const firstLon = parseFloat(itemCards[0].dataset.lon);
+        
+        itemsMap = L.map('items-map').setView([firstLat, firstLon], 12);
+        
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(itemsMap);
+
+        // Add markers for all items
+        const bounds = L.latLngBounds();
+        itemCards.forEach(function(card) {
+            const lat = parseFloat(card.dataset.lat);
+            const lon = parseFloat(card.dataset.lon);
+            const title = card.dataset.title || 'Item';
+            const location = card.dataset.location || '';
+            const itemUrl = card.dataset.url || '#';
+
+            const marker = L.marker([lat, lon]).addTo(itemsMap)
+                .bindPopup(`<strong>${title}</strong><br>${location}<br><a href="${itemUrl}" class="btn btn-sm btn-primary mt-2">View Details</a>`);
+            
+            bounds.extend([lat, lon]);
+        });
+
+        // Fit map to all markers
+        if (bounds.isValid()) {
+            itemsMap.fitBounds(bounds, { padding: [50, 50] });
+        }
+    }
+</script>
+{% endblock %}

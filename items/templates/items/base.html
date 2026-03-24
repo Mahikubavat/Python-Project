@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ShareLocal</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+        }
+
+        header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px 30px;
+        }
+
+        header h1 {
+            margin: 0;
+            display: inline;
+        }
+
+        nav {
+            float: right;
+        }
+
+        nav a {
+            color: white;
+            margin-left: 20px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            padding: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .btn {
+            padding: 10px 15px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+        }
+
+        .btn-success {
+            background: #2ecc71;
+        }
+
+        footer {
+            text-align: center;
+            padding: 15px;
+            background: #ecf0f1;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>ShareLocal</h1>
+    <nav>
+        <a href="{% url 'item_list' %}">Home</a>
+        <a href="{% url 'add_item' %}">Add Item</a>
+        <a href="{% url 'my_items' %}">My Items</a>
+    </nav>
+    <div style="clear: both;"></div>
+</header>
+
+<div class="container">
+    {% block content %}{% endblock %}
+</div>
+
+<footer>
+    <p>© 2026 ShareLocal | Share more, waste less</p>
+</footer>
+
+</body>
+</html>
