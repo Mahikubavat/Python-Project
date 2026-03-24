@@ -84,6 +84,31 @@
                 </div>
             </div>
 
+            <!-- Location Map -->
+            {% if item.latitude and item.longitude %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-geo-alt"></i> Location
+                    </h5>
+                </div>
+                <div id="item-map" class="card-body" style="padding: 0; height: 400px; border-radius: 0.25rem;">
+                    <!-- Map will load here -->
+                </div>
+            </div>
+            {% elif item.location %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-geo-alt"></i> Location
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">{{ item.location }}</p>
+                </div>
+            </div>
+            {% endif %}
+
             <!-- Actions -->
             <div class="d-grid gap-2 d-md-flex">
                 {% if is_owner %}
@@ -163,6 +188,9 @@
     {% endif %}
 </div>
 
+<!-- Leaflet Map CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+
 <style>
     .item-card {
         transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -171,5 +199,36 @@
         transform: translateY(-5px);
         box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15) !important;
     }
+    #item-map {
+        z-index: 1;
+    }
 </style>
+
+<!-- Leaflet Map JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const mapElement = document.getElementById('item-map');
+        if (mapElement && '{{ item.latitude }}' && '{{ item.longitude }}') {
+            const lat = parseFloat('{{ item.latitude }}');
+            const lon = parseFloat('{{ item.longitude }}');
+            
+            // Initialize map
+            const map = L.map('item-map').setView([lat, lon], 14);
+            
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+            
+            // Add marker for item location
+            L.marker([lat, lon]).addTo(map)
+                .bindPopup('<strong>{{ item.title }}</strong><br>{{ item.location }}')
+                .openPopup();
+        }
+    });
+</script>
+
 {% endblock %}

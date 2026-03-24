@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 from core.models import Category
-import requests
 
 def geocode_location(location):
     """Geocode a location string to get latitude and longitude."""
@@ -9,6 +8,7 @@ def geocode_location(location):
         return None, None
     
     try:
+        import requests
         # Using Nominatim API (OpenStreetMap) - free and no API key required
         url = f"https://nominatim.openstreetmap.org/search"
         params = {
@@ -25,7 +25,8 @@ def geocode_location(location):
         
         if data:
             return float(data[0]['lat']), float(data[0]['lon'])
-    except (requests.RequestException, ValueError, KeyError, IndexError):
+    except Exception:
+        # Gracefully handle any errors (including missing requests library)
         pass
     
     return None, None
@@ -69,6 +70,10 @@ class Item(models.Model):
                 user_profile = getattr(self.owner, 'userprofile', None)
                 if user_profile and user_profile.location:
                     self.location = user_profile.location
+                    # Also copy coordinates from profile if available
+                    if user_profile.latitude and user_profile.longitude:
+                        self.latitude = user_profile.latitude
+                        self.longitude = user_profile.longitude
             except:
                 pass
         

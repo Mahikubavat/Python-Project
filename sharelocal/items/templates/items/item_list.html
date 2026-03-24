@@ -79,14 +79,39 @@
                 <button type="submit" class="btn btn-primary w-100">
                     <i class="bi bi-search"></i> Search
                 </button>
+
+                <hr class="my-3">
+
+                <button type="button" class="btn btn-outline-info w-100" id="toggle-map-btn">
+                    <i class="bi bi-map"></i> View on Map
+                </button>
             </form>
         </div>
 
         <div class="col-lg-9">
             {% if items %}
-            <div class="row g-4">
+            <!-- Map Container (Hidden by default) -->
+            <div id="items-map-container" class="card shadow-sm mb-4" style="display: none;">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-map"></i> Items Map
+                        </h5>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="close-map-btn">
+                            <i class="bi bi-x-lg"></i> Close Map
+                        </button>
+                    </div>
+                </div>
+                <div id="items-map" class="card-body" style="padding: 0; height: 600px; border-radius: 0.25rem;">
+                    <!-- Map will load here -->
+                </div>
+            </div>
+
+            <!-- Items Grid -->
+            <div id="items-grid">
+                <div class="row g-4">
                 {% for item in items %}
-                <div class="col-md-6 col-lg-4">
+                <div class="col-md-6 col-lg-4" {% if item.latitude and item.longitude %}data-lat="{{ item.latitude }}" data-lon="{{ item.longitude }}" data-title="{{ item.title }}" data-location="{{ item.location }}" data-url="{% url 'item_detail' item.id %}"{% endif %}>
                     <div class="card h-100 shadow-sm item-card">
                         {% if item.image %}
                         <div class="card-img-top" style="background-image: url('{{ item.image.url }}'); height: 200px; background-size: cover; background-position: center;"></div>
@@ -178,14 +203,18 @@
                 </ul>
             </nav>
             {% endif %}
-            {% else %}
-            <div class="alert alert-info" role="alert">
-                <i class="bi bi-info-circle"></i> No items found matching your criteria. Try adjusting your filters!
             </div>
-            {% endif %}
         </div>
     </div>
 </div>
+
+{% else %}
+<div class="container py-5">
+    <div class="alert alert-info" role="alert">
+        <i class="bi bi-info-circle"></i> No items found matching your criteria. Try adjusting your filters!
+    </div>
+</div>
+{% endif %}
 
 <style>
     .item-card {
@@ -195,12 +224,45 @@
         transform: translateY(-5px);
         box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15) !important;
     }
+    #items-map {
+        z-index: 1;
+    }
 </style>
+
+<!-- Leaflet Map CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+
+<!-- Leaflet Map JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
 <script>
+    let itemsMap = null;
+
     document.addEventListener('DOMContentLoaded', function() {
         const locateBtn = document.getElementById('locate-btn');
         const latInput = document.getElementById('lat');
         const lonInput = document.getElementById('lon');
+        const toggleMapBtn = document.getElementById('toggle-map-btn');
+        const closeMapBtn = document.getElementById('close-map-btn');
+        const mapContainer = document.getElementById('items-map-container');
+
+        // Toggle map view
+        if (toggleMapBtn) {
+            toggleMapBtn.addEventListener('click', function() {
+                mapContainer.style.display = mapContainer.style.display === 'none' ? 'block' : 'none';
+                if (mapContainer.style.display === 'block') {
+                    setTimeout(function() {
+                        initializeItemsMap();
+                    }, 100);
+                }
+            });
+        }
+
+        if (closeMapBtn) {
+            closeMapBtn.addEventListener('click', function() {
+                mapContainer.style.display = 'none';
+            });
+        }
 
         // Auto-detect location on page load if no coordinates are set
         if (!latInput.value && !lonInput.value && navigator.geolocation) {
@@ -235,5 +297,53 @@
             });
         });
     });
+
+    function initializeItemsMap() {
+        if (itemsMap !== null) {
+            itemsMap.invalidateSize();
+            return;
+        }
+
+        // Get all items with coordinates from the page
+        const itemCards = document.querySelectorAll('[data-lat][data-lon]');
+        
+        if (itemCards.length === 0) {
+            alert('No items with location data available for map view.');
+            document.getElementById('items-map-container').style.display = 'none';
+            return;
+        }
+
+        // Initialize map centered on first item
+        const firstLat = parseFloat(itemCards[0].dataset.lat);
+        const firstLon = parseFloat(itemCards[0].dataset.lon);
+        
+        itemsMap = L.map('items-map').setView([firstLat, firstLon], 12);
+        
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(itemsMap);
+
+        // Add markers for all items
+        const bounds = L.latLngBounds();
+        itemCards.forEach(function(card) {
+            const lat = parseFloat(card.dataset.lat);
+            const lon = parseFloat(card.dataset.lon);
+            const title = card.dataset.title || 'Item';
+            const location = card.dataset.location || '';
+            const itemUrl = card.dataset.url || '#';
+
+            const marker = L.marker([lat, lon]).addTo(itemsMap)
+                .bindPopup(`<strong>${title}</strong><br>${location}<br><a href="${itemUrl}" class="btn btn-sm btn-primary mt-2">View Details</a>`);
+            
+            bounds.extend([lat, lon]);
+        });
+
+        // Fit map to all markers
+        if (bounds.isValid()) {
+            itemsMap.fitBounds(bounds, { padding: [50, 50] });
+        }
+    }
 </script>
 {% endblock %}
