@@ -131,7 +131,6 @@ class UserProfileForm(forms.ModelForm):
         widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': 'Enter your location/city',
-            'id': 'id_location',
         })
     )
     profile_photo = forms.ImageField(
@@ -140,18 +139,10 @@ class UserProfileForm(forms.ModelForm):
             'class': 'form-control',
         })
     )
-    latitude = forms.FloatField(
-        required=False,
-        widget=forms.HiddenInput(attrs={'id': 'id_latitude'})
-    )
-    longitude = forms.FloatField(
-        required=False,
-        widget=forms.HiddenInput(attrs={'id': 'id_longitude'})
-    )
 
     class Meta:
         model = UserProfile
-        fields = ('phone', 'location', 'latitude', 'longitude', 'profile_photo')
+        fields = ('phone', 'location', 'profile_photo')
 
     def clean_phone(self):
         """Validate phone number"""
